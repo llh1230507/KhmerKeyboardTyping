@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+  <meta charset="UTF-8">
+  <title>ការវាយអក្សរខ្មែរ (Khmer Typing Practice)</title>
+  <style>
+    body {
+      font-family: 'Noto Sans Khmer', sans-serif;
+      text-align: center;
+      background: #f7f7f7;
+      padding: 40px;
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    #controls {
+      margin-bottom: 20px;
+    }
+
+    select, button {
+      font-size: 16px;
+      padding: 10px 15px;
+      margin: 5px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #45a049;
+    }
+
+    #textToType {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      margin: 30px auto;
+      width: 80%;
+      font-size: 26px;
+      line-height: 1.8;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+      transition: all 0.3s ease;
+      text-align: left;
+    }
+
+    #textToType span {
+      transition: color 0.1s;
+    }
+
+    #inputArea {
+      width: 80%;
+      font-size: 20px;
+      padding: 15px;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      outline: none;
+      margin-top: 10px;
+      transition: border-color 0.2s;
+    }
+
+    #inputArea:focus {
+      border-color: #4CAF50;
+    }
+
+    #liveStats {
+      font-size: 18px;
+      color: #555;
+      margin-top: 15px;
+    }
+
+    #result {
+      margin-top: 30px;
+      font-size: 18px;
+      animation: fadeIn 0.4s ease-in;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <h1>ការវាយអក្សរខ្មែរ (Khmer Typing Practice)</h1>
+
+  <div id="controls">
+    <label for="difficulty">ជ្រើសរើសកម្រិត៖ </label>
+    <select id="difficulty">
+      <option value="easy">សាមញ្ញ</option>
+      <option value="medium">មធ្យម</option>
+      <option value="hard">លំបាក</option>
+    </select>
+    <button id="startBtn">ចាប់ផ្តើម</button>
+    <button id="restartBtn" style="display:none;">ចាប់ផ្តើមម្ដងទៀត</button>
+  </div>
+
+  <div id="textToType">ជ្រើសរើសកម្រិត ហើយចុច "ចាប់ផ្តើម" ដើម្បីចាប់ផ្តើមវាយ។</div>
+
+  <textarea id="inputArea" rows="4" placeholder="វាយអត្ថបទនៅទីនេះ..." disabled></textarea>
+  <div id="liveStats">ល្បឿន: 0 CPM | ភាពត្រឹមត្រូវ: 0%</div>
+  <div id="result"></div>
+
+  <script>
+    const startBtn = document.getElementById('startBtn');
+    const restartBtn = document.getElementById('restartBtn');
+    const inputArea = document.getElementById('inputArea');
+    const result = document.getElementById('result');
+    const textDiv = document.getElementById('textToType');
+    const stats = document.getElementById('liveStats');
+    const difficulty = document.getElementById('difficulty');
+
+    const texts = {
+      easy: "ខ្ញុំស្រលាញ់ការរៀនភាសាខ្មែរ។",
+      medium: "ខ្ញុំស្រលាញ់ការរៀនភាសាខ្មែរ ពីព្រោះវាជាភាសាដែលមានប្រវត្តិសាស្ត្រយូរអង្វែង។",
+      hard: "ភាសាខ្មែរ​មានពាក្យសព្ទសម្បូរបែប និងមានអក្សរពីរោនជាច្រើនដែលតម្រូវឲ្យអ្នករៀនយល់ពីច្បាប់អក្សរសាស្ត្រ។"
+    };
+
+    let textToType = "";
+    let startTime, endTime, started = false;
+
+    difficulty.addEventListener('change', () => {
+      textToType = texts[difficulty.value];
+      textDiv.innerText = textToType;
+    });
+
+    startBtn.addEventListener('click', () => {
+      if (!textToType) textToType = texts[difficulty.value];
+      textDiv.innerText = textToType;
+      inputArea.disabled = false;
+      inputArea.value = "";
+      inputArea.focus();
+      result.innerHTML = "";
+      stats.innerText = "ល្បឿន: 0 CPM | ភាពត្រឹមត្រូវ: 0%";
+      startTime = null;
+      started = false;
+      startBtn.disabled = true;
+      restartBtn.style.display = "none";
+    });
+
+    inputArea.addEventListener('paste', (e) => e.preventDefault());
+
+    inputArea.addEventListener('input', () => {
+      const typed = inputArea.value;
+
+      if (!started) {
+        started = true;
+        startTime = new Date();
+      }
+
+      // Live color highlighting
+      let displayHTML = '';
+      for (let i = 0; i < textToType.length; i++) {
+        if (i < typed.length) {
+          if (typed[i] === textToType[i]) {
+            displayHTML += `<span style="color:green">${textToType[i]}</span>`;
+          } else {
+            displayHTML += `<span style="color:red">${textToType[i]}</span>`;
+          }
+        } else {
+          displayHTML += `<span style="color:#555">${textToType[i]}</span>`;
+        }
+      }
+      textDiv.innerHTML = displayHTML;
+
+      // Real-time stats
+      const correctChars = [...typed].filter((c, i) => c === textToType[i]).length;
+      const accuracy = Math.round((correctChars / typed.length) * 100) || 0;
+      const timeElapsed = (new Date() - startTime) / 1000;
+      const cpm = timeElapsed > 0 ? Math.round((typed.length / timeElapsed) * 60) : 0;
+      stats.innerText = `ល្បឿន: ${cpm} CPM | ភាពត្រឹមត្រូវ: ${accuracy}%`;
+
+      // If finished
+      if (typed === textToType) {
+        endTime = new Date();
+        const timeTaken = (endTime - startTime) / 1000;
+        showResults(timeTaken, accuracy, cpm);
+      }
+    });
+
+    function showResults(timeTaken, accuracy, cpm) {
+      inputArea.disabled = true;
+      startBtn.disabled = false;
+      restartBtn.style.display = "inline-block";
+      result.innerHTML = `
+        <h3>លទ្ធផល:</h3>
+        🕒 ពេលវេលា៖ ${timeTaken.toFixed(2)} វិនាទី<br>
+        ✅ ភាពត្រឹមត្រូវ៖ ${accuracy}%<br>
+        ⚡ ល្បឿនវាយ៖ ${cpm} តួអក្សរ/នាទី (CPM)
+      `;
+    }
+
+    restartBtn.addEventListener('click', () => {
+      location.reload();
+    });
+  </script>
+</body>
+</html>
